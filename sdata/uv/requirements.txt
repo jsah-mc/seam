@@ -1,0 +1,6 @@
+# Seam Python helpers
+kde-material-you-colors==1.10.1
+material-color-utilities==0.2.1
+materialyoucolor==2.0.10
+pillow==11.1.0
+requests==2.33.1

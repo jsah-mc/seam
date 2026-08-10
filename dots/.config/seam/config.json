@@ -1,0 +1,66 @@
+{
+    "bar": {
+        "widgets": {
+            "battery": {
+                "area": "right",
+                "index": 1
+            },
+            "clock": {
+                "area": "center",
+                "index": 2
+            },
+            "connectivity": {
+                "area": "right",
+                "index": 4
+            },
+            "currentWindow": {
+                "area": "center",
+                "index": 0
+            },
+            "launcher": {
+                "area": "left",
+                "index": 0
+            },
+            "lock": {
+                "area": "right",
+                "index": 0
+            },
+            "power": {
+                "area": "right",
+                "index": 5
+            },
+            "settings": {
+                "area": "right",
+                "index": 3
+            },
+            "visualizer": {
+                "area": "center",
+                "index": 1
+            },
+            "wallpaper": {
+                "area": "right",
+                "index": 2
+            },
+            "workspaces": {
+                "area": "left",
+                "index": 1
+            }
+        }
+    },
+    "dock": {
+        "autoHide": true,
+        "enabled": true,
+        "pins": {
+            "code": 3,
+            "dolphin": 1,
+            "kitty": 2,
+            "vesktop": 4,
+            "zen": 0
+        },
+        "side": "bottom"
+    },
+    "theme": {
+        "mode": "dark",
+        "scheme": "auto"
+    }
+}
