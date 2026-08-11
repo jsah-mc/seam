@@ -1,0 +1,6 @@
+module qs.modules.seam.pill.widgets.systray
+SysTray 1.0 SysTray.qml
+SysTrayItem 1.0 SysTrayItem.qml
+SysTrayMenu 1.0 SysTrayMenu.qml
+SysTrayMenuEntry 1.0 SysTrayMenuEntry.qml
+StyledPopup 1.0 StyledPopup.qml

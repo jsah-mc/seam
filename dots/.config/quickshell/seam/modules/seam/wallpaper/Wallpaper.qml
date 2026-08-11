@@ -17,7 +17,7 @@ Scope {
   property bool opened: false
   property real revealProgress: 0
   property string wallpaperDirectory: Quickshell.env("HOME") + "/Pictures/Wallpapers"
-  property string selectedPath: wallpaperDirectory + "/asian-village.jpg"
+  property string selectedPath: wallpaperDirectory + "/default.jpg"
   property string themeMode: "dark"
   property string schemeType: "auto"
   property string colorFlag: ""

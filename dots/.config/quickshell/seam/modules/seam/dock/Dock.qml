@@ -79,16 +79,22 @@ Scope {
             id: appHover
             onHoveredChanged: {
                 if (hovered) {
+                    appButton.dockHost.appHoverCount++
                     appButton.dockHost.holdOpen()
                     previewCloseTimer.stop()
                     if (appButton.toplevels.length > 0)
                         previewOpenTimer.restart()
                 } else {
+                    appButton.dockHost.appHoverCount = Math.max(0, appButton.dockHost.appHoverCount - 1)
                     appButton.dockHost.releaseLater()
                     previewOpenTimer.stop()
                     previewCloseTimer.restart()
                 }
             }
+        }
+        Component.onDestruction: {
+            if (appHover.hovered)
+                dockHost.appHoverCount = Math.max(0, dockHost.appHoverCount - 1)
         }
         Timer { id: previewOpenTimer; interval: 220; onTriggered: appButton.previewOpen = true }
         Timer {
@@ -103,13 +109,16 @@ Scope {
             id: appTap
             acceptedButtons: Qt.LeftButton
             onTapped: {
-                if (appButton.toplevels.length > 0)
-                {
+                // A primary click launches the application. Some running
+                // windows do not have a matching desktop file (for example
+                // transient or Wine windows), so focus one of those only as a
+                // fallback.
+                if (appButton.desktopEntry) {
+                    appButton.desktopEntry.execute()
+                } else if (appButton.toplevels.length > 0) {
                     appButton.lastFocused = (appButton.lastFocused + 1) % appButton.toplevels.length
                     appButton.toplevels[appButton.lastFocused].activate()
                 }
-                else
-                    appButton.desktopEntry?.execute()
             }
         }
         TapHandler {
@@ -246,6 +255,7 @@ Scope {
     }
 
     component AppsButton: Rectangle {
+        required property var dockHost
         width: 46
         height: 46
         radius: Appearance.radius(16)
@@ -261,7 +271,22 @@ Scope {
             iconSize: 25
             color: Appearance.colors.colOnLayer1
         }
-        HoverHandler { id: appsHover }
+        HoverHandler {
+            id: appsHover
+            onHoveredChanged: {
+                if (hovered) {
+                    dockHost.appHoverCount++
+                    dockHost.holdOpen()
+                } else {
+                    dockHost.appHoverCount = Math.max(0, dockHost.appHoverCount - 1)
+                    dockHost.releaseLater()
+                }
+            }
+        }
+        Component.onDestruction: {
+            if (appsHover.hovered)
+                dockHost.appHoverCount = Math.max(0, dockHost.appHoverCount - 1)
+        }
         TapHandler {
             id: appsTap
             onTapped: GlobalStates.searchOpen = !GlobalStates.searchOpen
@@ -277,6 +302,7 @@ Scope {
             readonly property string effectiveSide: DockPins.side === "bottom" && Config.options.bar.bottom ? "top" : DockPins.side
             readonly property bool vertical: effectiveSide === "left" || effectiveSide === "right"
             property bool hoverHeld: false
+            property int appHoverCount: 0
             property int previewHoldCount: 0
             readonly property bool previewHeld: previewHoldCount > 0
             readonly property bool reveal: !DockPins.autoHide || hoverHeld || previewHeld || GlobalStates.searchOpen
@@ -285,6 +311,11 @@ Scope {
                 hoverHeld = true
             }
             function releaseLater() {
+                if (appHoverCount > 0) {
+                    hideDelay.stop()
+                    hoverHeld = true
+                    return
+                }
                 hideDelay.restart()
             }
             screen: modelData
@@ -324,7 +355,7 @@ Scope {
                     // Moving from the edge sensor onto the animated card emits an
                     // edge exit after the app has already requested a hold. Only
                     // hide once every surface is genuinely clear of the pointer.
-                    if (dockWindow.previewHeld || dockHover.hovered || cardHover.hovered
+                    if (dockWindow.appHoverCount > 0 || dockWindow.previewHeld || dockHover.hovered || cardHover.hovered
                             || edgeSensor.containsMouse || revealSensor.containsMouse) {
                         dockWindow.hoverHeld = true
                         return
@@ -495,7 +526,7 @@ Scope {
                         delegate: PinnedAppButton { required property var modelData; appData: modelData; dockHost: dockWindow }
                     }
                     Rectangle { width: 1; height: 32; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colOutlineVariant }
-                    AppsButton {}
+                    AppsButton { dockHost: dockWindow }
                 }
 
                 Column {
@@ -509,7 +540,7 @@ Scope {
                         delegate: PinnedAppButton { required property var modelData; appData: modelData; dockHost: dockWindow }
                     }
                     Rectangle { width: 32; height: 1; anchors.horizontalCenter: parent.horizontalCenter; color: Appearance.colors.colOutlineVariant }
-                    AppsButton {}
+                    AppsButton { dockHost: dockWindow }
                 }
             }
         }

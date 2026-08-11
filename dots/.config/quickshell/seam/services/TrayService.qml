@@ -28,12 +28,15 @@ Singleton {
     function pin(itemId) {
         var pins = Config.options.tray.pinnedItems;
         if (pins.includes(itemId)) return;
-        Config.options.tray.pinnedItems.push(itemId);
+        Config.options.tray.pinnedItems = pins.concat([itemId]);
     }
     function unpin(itemId) {
         Config.options.tray.pinnedItems = Config.options.tray.pinnedItems.filter(id => id !== itemId);
     }
     function isPinned(itemId) {
+        // With invertPinnedItems enabled, pinnedItems is intentionally the
+        // inverse of the stored list. Report the item's visual tray state,
+        // matching End-4's menu semantics, rather than raw JSON membership.
         for (var i = 0; i < root.pinnedItems.length; i++) {
             if (root.pinnedItems[i].id === itemId)
                 return true;

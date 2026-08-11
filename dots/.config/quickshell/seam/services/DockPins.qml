@@ -22,6 +22,7 @@ Singleton {
         { id: "clock", name: "Clock" },
         { id: "battery", name: "Battery" },
         { id: "connectivity", name: "Connectivity" },
+        { id: "systemTray", name: "System tray" },
         { id: "wallpaper", name: "Wallpaper" },
         { id: "settings", name: "Settings" },
         { id: "lock", name: "Lock" },
@@ -164,10 +165,11 @@ Singleton {
                     "clock": { "area": "center", "index": 2 },
                     "battery": { "area": "right", "index": 0 },
                     "connectivity": { "area": "right", "index": 1 },
-                    "wallpaper": { "area": "right", "index": 2 },
-                    "settings": { "area": "right", "index": 3 },
-                    "lock": { "area": "right", "index": 4 },
-                    "power": { "area": "right", "index": 5 }
+                    "systemTray": { "area": "right", "index": 2 },
+                    "wallpaper": { "area": "right", "index": 3 },
+                    "settings": { "area": "right", "index": 4 },
+                    "lock": { "area": "right", "index": 5 },
+                    "power": { "area": "right", "index": 6 }
                 })
             }
         }

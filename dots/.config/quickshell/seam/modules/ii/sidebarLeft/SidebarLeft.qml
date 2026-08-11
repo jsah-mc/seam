@@ -128,6 +128,13 @@ Scope { // Scope
                 }
             }
 
+            Shortcut {
+                sequence: "Escape"
+                context: Qt.ApplicationShortcut
+                enabled: GlobalStates.sidebarLeftOpen
+                onActivated: panelWindow.hide()
+            }
+
             // Content
             StyledRectangularShadow {
                 target: sidebarLeftBackground
@@ -181,6 +188,13 @@ Scope { // Scope
             visible: GlobalStates.sidebarLeftOpen
             onVisibleChanged: {
                 if (!visible) GlobalStates.sidebarLeftOpen = false;
+            }
+
+            Shortcut {
+                sequence: "Escape"
+                context: Qt.ApplicationShortcut
+                enabled: GlobalStates.sidebarLeftOpen
+                onActivated: GlobalStates.sidebarLeftOpen = false
             }
             
             Rectangle {

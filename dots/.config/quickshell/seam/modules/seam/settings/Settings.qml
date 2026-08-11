@@ -325,6 +325,7 @@ Scope {
                     SettingToggle { Layout.fillWidth: true; title: "Clock"; checked: Config.options.bar.widgets.clock; onToggled: value => Config.options.bar.widgets.clock = value }
                     SettingToggle { Layout.fillWidth: true; title: "Battery"; checked: Config.options.bar.widgets.battery; onToggled: value => Config.options.bar.widgets.battery = value }
                     SettingToggle { Layout.fillWidth: true; title: "Connectivity"; checked: Config.options.bar.widgets.connectivity; onToggled: value => Config.options.bar.widgets.connectivity = value }
+                    SettingToggle { Layout.fillWidth: true; title: "System tray"; checked: Config.options.bar.widgets.systemTray; onToggled: value => Config.options.bar.widgets.systemTray = value }
                     SettingToggle { Layout.fillWidth: true; title: "Wallpaper"; checked: Config.options.bar.widgets.wallpaper; onToggled: value => Config.options.bar.widgets.wallpaper = value }
                     SettingToggle { Layout.fillWidth: true; title: "Settings"; checked: Config.options.bar.widgets.settings; onToggled: value => Config.options.bar.widgets.settings = value }
                     SettingToggle { Layout.fillWidth: true; title: "Lock"; checked: Config.options.bar.widgets.lock; onToggled: value => Config.options.bar.widgets.lock = value }

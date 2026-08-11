@@ -710,7 +710,7 @@ Singleton {
                 image: imagePath,
             }))
             command = [
-                (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/quickshell/.venv/bin/python",
+                Quickshell.env("HOME") + "/.local/share/quickshell/.venv/bin/python",
                 CF.FileUtils.trimFileProtocol(Quickshell.shellPath("scripts/ai/codex_chat.py")),
                 "--request", codexRequestFile.path
             ]

@@ -59,12 +59,16 @@ Scope {
         Connections {
             target: GlobalFocusGrab
             function onDismissed() {
-                // Some sidebar controls intentionally do not take keyboard
-                // focus. Keep input routed to the open sidebar after those
-                // clicks instead of treating them as a close request.
                 if (GlobalStates.sidebarRightOpen)
-                    Qt.callLater(() => GlobalFocusGrab.addDismissable(panelWindow))
+                    panelWindow.hide()
             }
+        }
+
+        Shortcut {
+            sequence: "Escape"
+            context: Qt.ApplicationShortcut
+            enabled: GlobalStates.sidebarRightOpen
+            onActivated: panelWindow.hide()
         }
 
         Loader {

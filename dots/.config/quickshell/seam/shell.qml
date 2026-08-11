@@ -1,3 +1,4 @@
+//@ pragma UseQApplication
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 import Quickshell
 import QtQuick
@@ -16,7 +17,7 @@ import qs.modules.ii.sidebarRight
 import qs.modules.ii.notificationPopup
 import qs.services
 Scope {
-  // Seam shell with end-4's vendored right sidebar stack.
+  // Seam shell with End-4 modules adapted to Seam's frame and pills.
   Pill {}
   Launcher {}
   Wallpaper {}

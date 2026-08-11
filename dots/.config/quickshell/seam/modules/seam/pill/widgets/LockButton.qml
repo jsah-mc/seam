@@ -23,6 +23,6 @@ Rectangle {
     }
     HoverHandler { id: hover }
     TapHandler {
-        onTapped: Quickshell.execDetached(["qs", "-c", "seam", "ipc", "call", "lock", "activate"])
+        onTapped: Quickshell.execDetached(["qs", "ipc", "-c", "seam", "call", "lock", "activate"])
     }
 }

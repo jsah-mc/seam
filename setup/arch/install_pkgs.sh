@@ -35,6 +35,22 @@ log() {
   printf '\033[1;34m[seam]\033[0m %s\n' "$*"
 }
 
+run_with_spinner() {
+  local title="$1"
+  shift
+
+  if command -v gum >/dev/null 2>&1; then
+    gum spin \
+      --spinner dot \
+      --show-output \
+      --title "$title" \
+      -- "$@"
+  else
+    log "$title"
+    "$@"
+  fi
+}
+
 die() {
   printf '\033[1;31m[seam]\033[0m %s\n' "$*" >&2
   exit 1
@@ -127,21 +143,31 @@ install_local_pkgbuild() (
       printf '%q ' "${confirm_args[@]}" "${dependency_list[@]}"
       printf '\n'
     fi
-    printf '  makepkg -Afs\n'
-    printf '  sudo pacman -U --needed <packages from makepkg --packagelist>\n'
+    printf '  makepkg -Afs '
+    printf '%q ' "${confirm_args[@]}"
+    printf '\n'
+    printf '  sudo pacman -U --needed '
+    printf '%q ' "${confirm_args[@]}"
+    printf '<packages from makepkg --packagelist>\n'
     return
   fi
 
   if (( ${#dependency_list[@]} > 0 )); then
-    "$aur_helper" -S --needed --asdeps "${confirm_args[@]}" "${dependency_list[@]}"
+    run_with_spinner \
+      "Installing dependencies for ${pkgname:-${package_dir##*/}}..." \
+      "$aur_helper" -S --needed --asdeps "${confirm_args[@]}" "${dependency_list[@]}"
   fi
 
   # Build first, then install only the files reported by makepkg. This avoids
   # accidentally installing stale *.pkg.tar.zst files from earlier builds.
-  makepkg -Afs "${confirm_args[@]}"
+  run_with_spinner \
+    "Building ${pkgname:-${package_dir##*/}} with makepkg..." \
+    makepkg -Afs "${confirm_args[@]}"
   mapfile -t package_files < <(makepkg --packagelist)
   (( ${#package_files[@]} > 0 )) || die "makepkg did not report an output package for $package_dir"
-  sudo pacman -U --needed "${confirm_args[@]}" "${package_files[@]}"
+  run_with_spinner \
+    "Installing ${pkgname:-${package_dir##*/}}..." \
+    sudo pacman -U --needed "${confirm_args[@]}" "${package_files[@]}"
 )
 
 find_aur_helper

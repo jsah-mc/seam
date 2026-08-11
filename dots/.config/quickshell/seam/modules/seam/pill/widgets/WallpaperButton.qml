@@ -28,6 +28,6 @@ Rectangle {
   HoverHandler { id: buttonHover }
 
   TapHandler {
-    onTapped: Quickshell.execDetached(["qs", "-c", "seam", "ipc", "call", "wallpaper", "toggle"])
+    onTapped: Quickshell.execDetached(["qs", "ipc", "-c", "seam", "call", "wallpaper", "toggle"])
   }
 }

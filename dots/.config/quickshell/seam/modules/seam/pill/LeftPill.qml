@@ -20,7 +20,7 @@ BasePill {
   }
 
   function widgetFile(id) {
-    const files = { launcher: "LauncherButton.qml", workspaces: "WorkspacesWidget.qml", currentWindow: "CurrentWindowWidget.qml", visualizer: "MusicVisualizer.qml", clock: "ClockWidget.qml", battery: "BatteryWidget.qml", connectivity: "ConnectivityTray.qml", wallpaper: "WallpaperButton.qml", settings: "SettingsButton.qml", lock: "LockButton.qml", power: "PowerButton.qml" }
+    const files = { launcher: "LauncherButton.qml", workspaces: "WorkspacesWidget.qml", currentWindow: "CurrentWindowWidget.qml", visualizer: "MusicVisualizer.qml", clock: "ClockWidget.qml", battery: "BatteryWidget.qml", connectivity: "ConnectivityTray.qml", systemTray: "SystemTrayWidget.qml", wallpaper: "WallpaperButton.qml", settings: "SettingsButton.qml", lock: "LockButton.qml", power: "PowerButton.qml" }
     return files[id] ?? ""
   }
 }

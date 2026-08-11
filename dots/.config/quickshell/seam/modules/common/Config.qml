@@ -232,6 +232,7 @@ Singleton {
                     property bool clock: true
                     property bool battery: true
                     property bool connectivity: true
+                    property bool systemTray: true
                     property bool wallpaper: true
                     property bool settings: true
                     property bool lock: true
@@ -476,6 +477,7 @@ Singleton {
 
             property JsonObject tray: JsonObject {
                 property bool monochromeIcons: true
+                property bool collapsed: false
                 property bool showItemId: false
                 property bool invertPinnedItems: true // Makes the below a whitelist for the tray and blacklist for the pinned area
                 property list<var> pinnedItems: [ "Fcitx" ]
