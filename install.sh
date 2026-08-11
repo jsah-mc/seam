@@ -33,7 +33,6 @@ readonly -a desktop_packages=(
   go-yq
   hypridle
   jq
-  python-terminaltexteffects
   ripgrep
   rsync
   tela-circle-icon-theme-standard
@@ -142,13 +141,7 @@ show_logo() {
     clear || true
   fi
   echo
-  if [[ -t 1 ]] && command -v tte >/dev/null 2>&1; then
-    tte -i "$SCRIPT_DIR/logo.txt" --canvas-width 0 --anchor-text c --frame-rate 920 burn
-  else
-    # tte is installed later through the selected AUR helper. Keep the first
-    # run usable before the bootstrap phase reaches that package.
-    cat -- "$SCRIPT_DIR/logo.txt"
-  fi
+  cat -- "$SCRIPT_DIR/logo.txt"
   echo
 }
 
@@ -454,7 +447,7 @@ deploy_dotfiles() {
 
 verify_installation() {
   local command_name
-  local -a required_commands=(git gum jq qs rsync tte uv yq)
+  local -a required_commands=(git gum jq qs rsync uv yq)
   local -a missing_commands=()
 
   for command_name in "${required_commands[@]}"; do
