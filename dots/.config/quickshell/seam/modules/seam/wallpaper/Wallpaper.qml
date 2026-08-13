@@ -17,7 +17,7 @@ Scope {
   property bool opened: false
   property real revealProgress: 0
   property string wallpaperDirectory: Quickshell.env("HOME") + "/Pictures/Wallpapers"
-  property string selectedPath: wallpaperDirectory + "/default.jpg"
+  property string selectedPath: ""
   property string themeMode: "dark"
   property string schemeType: "auto"
   property string colorFlag: ""
@@ -25,10 +25,9 @@ Scope {
   property real wallpaperTransition: 1
   property int wallpaperAnimation: 0
   property bool startupRestoreAttempted: false
-  readonly property string currentWallpaperPath: Quickshell.env("HOME") + "/.local/state/quickshell/wallpaper/current.txt"
+  readonly property string currentWallpaperPath: Quickshell.env("HOME") + "/.local/state/quickshell/user/generated/wallpaper/path.txt"
   readonly property string currentThemePath: Quickshell.env("HOME") + "/.local/state/quickshell/wallpaper/theme.txt"
   readonly property string currentSchemePath: Quickshell.env("HOME") + "/.local/state/quickshell/wallpaper/scheme.txt"
-  readonly property string setWallScript: Qt.resolvedUrl("../../../scripts/set_wall").toString().replace("file://", "")
 
   onOpenedChanged: revealProgress = opened ? 1 : 0
 
@@ -49,32 +48,72 @@ Scope {
     wallpaperAnimation = Math.floor(Math.random() * 4);
     wallpaperTransition = 0;
     selectedPath = path;
-    Quickshell.execDetached([setWallScript, path, themeMode, schemeType, colorFlag, accentColor]);
+    if (!isVideoPath(path)) {
+      const named = ["catppuccin", "gruvbox", "tokyonight", "rosepine"].includes(schemeType);
+      const normalized = String(schemeType === "auto" ? "tonal-spot" : schemeType)
+        .replace(/^scheme-/, "").trim().toLowerCase().replace(/\s+/g, "-");
+      themeGenerator.generatedScheme = named ? normalized : "dynamic-" + normalized;
+      themeGenerator.command = ["seam", "wall", "set", "--type", "tonal-spot"]
+        .concat(themeMode === "light" ? ["--light"] : [])
+        .concat([path]);
+      themeGenerator.running = true;
+    }
     Qt.callLater(() => wallpaperChangeAnimation.restart());
     opened = false;
   }
 
+  Process {
+    id: themeGenerator
+    property string generatedScheme: "dynamic-tonal-spot"
+    running: false
+    stderr: StdioCollector {
+      onStreamFinished: {
+        if (text.trim().length)
+          console.warn("[Wallpaper] seam wall set:", text.trim());
+      }
+    }
+    onExited: (exitCode, exitStatus) => {
+      if (exitCode === 0 && generatedScheme.length > 0) {
+        Quickshell.execDetached(["seam", "generate", "--image", root.selectedPath, "--scheme", generatedScheme]
+          .concat(root.themeMode === "light" ? ["--light"] : []));
+      }
+      generatedScheme = "";
+    }
+  }
+
   function toggleTheme() {
     themeMode = themeMode === "dark" ? "light" : "dark";
-    if (selectedPath.length > 0)
-      Quickshell.execDetached([setWallScript, selectedPath, themeMode, schemeType, colorFlag, accentColor]);
   }
 
   function setScheme(type) {
     schemeType = type;
-    if (selectedPath.length > 0)
-      Quickshell.execDetached([setWallScript, selectedPath, themeMode, schemeType, colorFlag, accentColor]);
   }
 
   function loadCurrentWallpaper() {
-    const path = currentWallpaperFile.text().trim();
-    if (path.length > 0) {
-      if (path.startsWith("/"))
-        selectedPath = path;
-      else if (path.startsWith("file://"))
-        selectedPath = decodeURIComponent(path.replace("file://", ""));
-      else
-        selectedPath = Quickshell.env("HOME") + "/" + path;
+    let path = currentWallpaperFile.text().trim();
+    if (!path.length)
+      return;
+    if (path.startsWith("file://"))
+      path = decodeURIComponent(path.replace("file://", ""));
+    else if (!path.startsWith("/"))
+      path = Quickshell.env("HOME") + "/" + path;
+    wallpaperResolver.command = ["bash", "-c",
+      "if [[ -f \"$1\" ]]; then printf '%s' \"$1\"; elif [[ -f \"$2/${1##*/}\" ]]; then printf '%s' \"$2/${1##*/}\"; else find \"$2\" -maxdepth 1 -type f \\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\\) -print -quit; fi",
+      "seam-wallpaper-resolver", path, wallpaperDirectory];
+    wallpaperResolver.running = true;
+  }
+
+  Process {
+    id: wallpaperResolver
+    stdout: StdioCollector {
+      onStreamFinished: {
+        const resolved = text.trim();
+        if (resolved.length > 0) {
+          root.selectedPath = resolved;
+          if (currentWallpaperFile.text().trim() !== resolved)
+            currentWallpaperFile.setText(resolved + "\n");
+        }
+      }
     }
   }
 
@@ -109,8 +148,6 @@ Scope {
     repeat: false
     onTriggered: {
       root.startupRestoreAttempted = true;
-      if (root.isVideoPath(root.selectedPath))
-        Quickshell.execDetached([root.setWallScript, root.selectedPath, root.themeMode, root.schemeType, root.colorFlag, root.accentColor]);
     }
   }
 

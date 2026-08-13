@@ -5,8 +5,8 @@ hl.config({
 		gaps_out = 20,
 		border_size = 2,
 		col = {
-			active_border = { colors = { colors.primary, colors.secondary }, angle = 45 },
-			inactive_border = colors.surface,
+			active_border = { colors = { colors.focused, colors.focused2 }, angle = 45 },
+			inactive_border = colors.unfocused,
 		},
 		resize_on_border = false,
 		allow_tearing = false,

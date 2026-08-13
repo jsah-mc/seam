@@ -15,6 +15,7 @@ readonly -a metapackages=(
   "illogical-impulse-hyprland"
   "illogical-impulse-microtex-git"
   "illogical-impulse-quickshell-git"
+  "seam-cli"
 )
 
 usage() {
@@ -63,33 +64,33 @@ on_error() {
 }
 trap 'on_error $LINENO' ERR
 
-while (( $# > 0 )); do
+while (($# > 0)); do
   case "$1" in
-    --dry-run)
-      dry_run=1
-      ;;
-    --noconfirm)
-      noninteractive=1
-      ;;
-    --helper)
-      (( $# >= 2 )) || die "--helper requires yay or paru"
-      aur_helper="$2"
-      shift
-      ;;
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    *)
-      usage >&2
-      die "Unknown option: $1"
-      ;;
+  --dry-run)
+    dry_run=1
+    ;;
+  --noconfirm)
+    noninteractive=1
+    ;;
+  --helper)
+    (($# >= 2)) || die "--helper requires yay or paru"
+    aur_helper="$2"
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    usage >&2
+    die "Unknown option: $1"
+    ;;
   esac
   shift
 done
 
 [[ -r /etc/arch-release ]] || die "This installer only supports Arch Linux and Arch-based distributions."
-(( EUID != 0 )) || die "Run this script as a regular user, not root; makepkg refuses to build as root."
+((EUID != 0)) || die "Run this script as a regular user, not root; makepkg refuses to build as root."
 
 for command_name in bash makepkg pacman sudo; do
   command -v "$command_name" >/dev/null 2>&1 || die "Missing required command: $command_name"
@@ -131,14 +132,14 @@ install_local_pkgbuild() (
     dependency_list+=("${makedepends[@]}")
   fi
 
-  if (( noninteractive )); then
+  if ((noninteractive)); then
     confirm_args+=(--noconfirm)
   fi
 
   log "Preparing ${pkgname:-${package_dir##*/}}"
-  if (( dry_run )); then
+  if ((dry_run)); then
     printf '  cd %q\n' "$package_dir"
-    if (( ${#dependency_list[@]} > 0 )); then
+    if ((${#dependency_list[@]} > 0)); then
       printf '  %q -S --needed --asdeps ' "$aur_helper"
       printf '%q ' "${confirm_args[@]}" "${dependency_list[@]}"
       printf '\n'
@@ -152,7 +153,7 @@ install_local_pkgbuild() (
     return
   fi
 
-  if (( ${#dependency_list[@]} > 0 )); then
+  if ((${#dependency_list[@]} > 0)); then
     run_with_spinner \
       "Installing dependencies for ${pkgname:-${package_dir##*/}}..." \
       "$aur_helper" -S --needed --asdeps "${confirm_args[@]}" "${dependency_list[@]}"
@@ -164,7 +165,7 @@ install_local_pkgbuild() (
     "Building ${pkgname:-${package_dir##*/}} with makepkg..." \
     makepkg -Afs "${confirm_args[@]}"
   mapfile -t package_files < <(makepkg --packagelist)
-  (( ${#package_files[@]} > 0 )) || die "makepkg did not report an output package for $package_dir"
+  ((${#package_files[@]} > 0)) || die "makepkg did not report an output package for $package_dir"
   run_with_spinner \
     "Installing ${pkgname:-${package_dir##*/}}..." \
     sudo pacman -U --needed "${confirm_args[@]}" "${package_files[@]}"
@@ -178,7 +179,7 @@ for package_name in "${metapackages[@]}"; do
   install_local_pkgbuild "$SCRIPT_DIR/$package_name"
 done
 
-if (( dry_run )); then
+if ((dry_run)); then
   log "Dry run complete; no packages were changed."
 else
   log "All Seam metapackages were installed successfully."

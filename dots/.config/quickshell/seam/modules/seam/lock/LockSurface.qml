@@ -27,7 +27,7 @@ MouseArea {
 
     FileView {
         id: wallpaperFile
-        path: Quickshell.env("HOME") + "/.local/state/quickshell/wallpaper/current.txt"
+        path: Quickshell.env("HOME") + "/.local/state/quickshell/user/generated/wallpaper/path.txt"
         preload: true
         watchChanges: true
         printErrors: false

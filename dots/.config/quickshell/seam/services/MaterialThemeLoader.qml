@@ -17,6 +17,7 @@ Singleton {
 
     function reapplyTheme() {
         themeFileView.reload()
+        delayedFileRead.restart()
     }
 
     function applyColors(fileContent) {
@@ -39,6 +40,7 @@ Singleton {
             }
 
             Appearance.m3colors.darkmode = Appearance.m3colors.m3background.hslLightness < 0.5
+            console.info(`[MaterialThemeLoader] Applied background ${Appearance.m3colors.m3background}, primary ${Appearance.m3colors.m3primary}`)
         } catch (error) {
             console.warn("Could not load generated Material colors:", error)
         }
@@ -97,6 +99,10 @@ Singleton {
 
     IpcHandler {
         target: "theme"
+
+        function reload(): void {
+            root.reapplyTheme();
+        }
 
         function toggleLightDark(): void {
             root.toggleLightDark();

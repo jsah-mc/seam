@@ -15,14 +15,46 @@ Scope {
     id: root
     property int currentTab: 0
 
+    FileView {
+        id: currentWallpaperFile
+        path: Quickshell.env("HOME") + "/.local/state/quickshell/user/generated/wallpaper/path.txt"
+        blockLoading: true
+        preload: true
+        watchChanges: true
+        onFileChanged: reload()
+    }
+
+    Process {
+        id: themeGenerator
+        running: false
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim().length)
+                    console.warn("[Settings] seam generate:", text.trim())
+            }
+        }
+    }
+
+    function regenerateTheme(mode, scheme) {
+        const wallpaper = currentWallpaperFile.text().trim()
+        if (!wallpaper.length) return
+        const named = ["catppuccin", "gruvbox", "tokyonight", "rosepine"].includes(scheme)
+        const normalized = String(scheme === "auto" ? "tonal-spot" : scheme)
+            .replace(/^scheme-/, "").trim().toLowerCase().replace(/\s+/g, "-")
+        const cliScheme = named ? normalized : "dynamic-" + normalized
+        themeGenerator.command = ["seam", "generate", "--image", wallpaper, "--scheme", cliScheme]
+            .concat(mode === "light" ? ["--light"] : [])
+        themeGenerator.running = true
+    }
+
     function applyScheme(scheme) {
         DockPins.setThemeScheme(scheme)
-        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", DockPins.themeMode, "--type", scheme, "--noswitch"])
+        regenerateTheme(DockPins.themeMode, scheme)
     }
 
     function applyThemeMode(mode) {
         DockPins.setThemeMode(mode)
-        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", mode, "--type", DockPins.themeScheme, "--noswitch"])
+        regenerateTheme(mode, DockPins.themeScheme)
     }
 
     function placeBarWidget(widgetId, area, beforeId) {
@@ -261,6 +293,7 @@ Scope {
                                 M3Button { Layout.fillWidth: true; text: "Theme"; icon: "palette"; selected: root.currentTab === 1; onClicked: root.currentTab = 1 }
                                 M3Button { Layout.fillWidth: true; text: "Network"; icon: Network.materialSymbol; selected: root.currentTab === 2; onClicked: { root.currentTab = 2; Network.rescanWifi() } }
                                 M3Button { Layout.fillWidth: true; text: "Bluetooth"; icon: "bluetooth"; selected: root.currentTab === 3; onClicked: root.currentTab = 3 }
+                                M3Button { Layout.fillWidth: true; text: "AI"; icon: "auto_awesome"; selected: root.currentTab === 4; onClicked: root.currentTab = 4 }
                                 Item { Layout.fillHeight: true }
                                 M3Button { Layout.fillWidth: true; text: "Close"; icon: "close"; onClicked: GlobalStates.settingsOpen = false }
                             }
@@ -271,7 +304,8 @@ Scope {
                             Layout.fillHeight: true
                             sourceComponent: root.currentTab === 0 ? interfacePage
                                 : root.currentTab === 1 ? themePage
-                                : root.currentTab === 2 ? networkPage : bluetoothPage
+                                : root.currentTab === 2 ? networkPage
+                                : root.currentTab === 3 ? bluetoothPage : aiPage
                         }
                     }
                 }
@@ -467,7 +501,7 @@ Scope {
                 }
 
                 Text {
-                    text: "Material color scheme"
+                    text: "Color scheme"
                     color: Appearance.m3colors.m3onSurfaceVariant
                     font.family: Appearance.font.family.main
                     font.pixelSize: 13
@@ -475,7 +509,7 @@ Scope {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: "Schemes are generated from your current wallpaper by set_wall."
+                    text: "Schemes are generated and applied by the Seam CLI."
                     wrapMode: Text.WordWrap
                     color: Appearance.m3colors.m3onSurfaceVariant
                     font.family: Appearance.font.family.main
@@ -495,6 +529,85 @@ Scope {
                     M3Button { Layout.fillWidth: true; text: "Neutral"; icon: "contrast"; selected: DockPins.themeScheme === "scheme-neutral"; onClicked: root.applyScheme("scheme-neutral") }
                     M3Button { Layout.fillWidth: true; text: "Rainbow"; icon: "looks"; selected: DockPins.themeScheme === "scheme-rainbow"; onClicked: root.applyScheme("scheme-rainbow") }
                     M3Button { Layout.fillWidth: true; text: "Tonal Spot"; icon: "palette"; selected: DockPins.themeScheme === "scheme-tonal-spot"; onClicked: root.applyScheme("scheme-tonal-spot") }
+                    M3Button { Layout.fillWidth: true; text: "Catppuccin"; icon: "pets"; selected: DockPins.themeScheme === "catppuccin"; onClicked: root.applyScheme("catppuccin") }
+                    M3Button { Layout.fillWidth: true; text: "Gruvbox"; icon: "coffee"; selected: DockPins.themeScheme === "gruvbox"; onClicked: root.applyScheme("gruvbox") }
+                    M3Button { Layout.fillWidth: true; text: "Tokyo Night"; icon: "nightlight"; selected: DockPins.themeScheme === "tokyonight"; onClicked: root.applyScheme("tokyonight") }
+                    M3Button { Layout.fillWidth: true; text: "Rosé Pine"; icon: "local_florist"; selected: DockPins.themeScheme === "rosepine"; onClicked: root.applyScheme("rosepine") }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: aiPage
+        Flickable {
+            contentWidth: width
+            contentHeight: aiColumn.implicitHeight + 48
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            ColumnLayout {
+                id: aiColumn
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 24 }
+                spacing: 14
+
+                SectionTitle { text: "AI" }
+                Text {
+                    Layout.fillWidth: true
+                    text: "Provider"
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                    font.family: Appearance.font.family.main
+                    font.pixelSize: 13
+                    font.weight: Font.Medium
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Repeater {
+                        model: ["openai", "gemini", "groq", "openrouter", "chatgpt"]
+                        M3Button {
+                            required property string modelData
+                            text: modelData === "chatgpt" ? "ChatGPT" : modelData.charAt(0).toUpperCase() + modelData.slice(1)
+                            selected: DockPins.aiProvider === modelData
+                            onClicked: DockPins.setAiProvider(modelData)
+                        }
+                    }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: "Model preset"
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                    font.family: Appearance.font.family.main
+                    font.pixelSize: 13
+                    font.weight: Font.Medium
+                }
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 10
+                    rowSpacing: 10
+                    Repeater {
+                        model: ["fast", "balanced", "smart", "coding"]
+                        M3Button {
+                            required property string modelData
+                            Layout.fillWidth: true
+                            text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
+                            icon: modelData === "coding" ? "code" : modelData === "fast" ? "bolt" : modelData === "smart" ? "psychology" : "balance"
+                            selected: DockPins.aiModel === modelData
+                            onClicked: {
+                                DockPins.setAiModel(modelData)
+                                Ai.setModel(modelData, false)
+                            }
+                        }
+                    }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: "Authentication and provider credentials are managed by the seam command."
+                    wrapMode: Text.WordWrap
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                    font.family: Appearance.font.family.main
+                    font.pixelSize: 12
                 }
             }
         }

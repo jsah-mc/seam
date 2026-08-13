@@ -8,7 +8,6 @@ readonly DOTS_DIR="$SCRIPT_DIR/dots"
 readonly WALLPAPER_REPOSITORY="https://github.com/orangci/walls.git"
 readonly WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
 readonly PYTHON_REQUIREMENTS="$SCRIPT_DIR/sdata/uv/requirements.txt"
-readonly SEAM_VIRTUAL_ENV="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
 readonly INSTALL_LOCK="${XDG_RUNTIME_DIR:-/tmp}/seam-installer-${UID}.lock"
 readonly SEAM_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/seam"
 readonly INSTALL_LOG_DIR="$SEAM_STATE_DIR/install-logs"
@@ -67,7 +66,7 @@ warn() {
 
 journal() {
   [[ -n "$install_journal" ]] || return 0
-  printf '%(%Y-%m-%dT%H:%M:%S%z)T\t%s\n' -1 "$*" >> "$install_journal"
+  printf '%(%Y-%m-%dT%H:%M:%S%z)T\t%s\n' -1 "$*" >>"$install_journal"
 }
 
 die() {
@@ -151,23 +150,23 @@ trap on_interrupt INT TERM
 
 show_logo
 
-while (( $# > 0 )); do
+while (($# > 0)); do
   case "$1" in
-    --helper)
-      (( $# >= 2 )) || die "--helper requires yay or paru"
-      aur_helper="$2"
-      shift
-      ;;
-    *)
-      usage >&2
-      die "Unknown option: $1"
-      ;;
+  --helper)
+    (($# >= 2)) || die "--helper requires yay or paru"
+    aur_helper="$2"
+    shift
+    ;;
+  *)
+    usage >&2
+    die "Unknown option: $1"
+    ;;
   esac
   shift
 done
 
 [[ -r /etc/arch-release ]] || die "This installer only supports Arch Linux and Arch-based distributions."
-(( EUID != 0 )) || die "Run this installer as a regular user, not root."
+((EUID != 0)) || die "Run this installer as a regular user, not root."
 command -v pacman >/dev/null 2>&1 || die "pacman was not found."
 command -v sudo >/dev/null 2>&1 || die "sudo was not found."
 [[ -x "$ARCH_INSTALLER" ]] || die "Arch package installer is missing or not executable: $ARCH_INSTALLER"
@@ -185,12 +184,12 @@ preflight_checks() {
 
   available_kib="$(df -Pk -- "$HOME" | awk 'NR == 2 { print $4 }')"
   [[ "$available_kib" =~ ^[0-9]+$ ]] || die "Could not determine available disk space."
-  (( available_kib >= MINIMUM_FREE_KIB )) || \
+  ((available_kib >= MINIMUM_FREE_KIB)) ||
     die "At least 1 GiB of free space is required in $HOME."
 
   mkdir -p -- "$INSTALL_LOG_DIR"
   install_journal="$INSTALL_LOG_DIR/$(date +%Y%m%d-%H%M%S)-$$.log"
-  : > "$install_journal"
+  : >"$install_journal"
   chmod 600 -- "$install_journal"
   journal "Seam installer started repo=$SCRIPT_DIR user=${USER:-$UID}"
   journal "free_space_kib=$available_kib"
@@ -201,7 +200,7 @@ preflight_checks
 command -v flock >/dev/null 2>&1 || die "flock was not found (provided by util-linux)."
 exec {installer_lock_fd}>"$INSTALL_LOCK"
 flock -n "$installer_lock_fd" || die "Another Seam installer is already running."
-[[ ! -e /var/lib/pacman/db.lck ]] || \
+[[ ! -e /var/lib/pacman/db.lck ]] ||
   die "pacman is already running (or left /var/lib/pacman/db.lck behind)."
 
 start_sudo_keepalive() {
@@ -224,7 +223,7 @@ install_repository_packages() {
   local -a packages=(base-devel git gum rsync uv)
   local -a missing=()
   mapfile -t missing < <(pacman -T "${packages[@]}" 2>/dev/null || true)
-  if (( ${#missing[@]} == 0 )); then
+  if ((${#missing[@]} == 0)); then
     log "Bootstrap packages are already installed."
     return 0
   fi
@@ -238,7 +237,7 @@ install_repository_packages() {
 verify_bootstrap_commands() {
   local command_name
   for command_name in git gum makepkg rsync uv; do
-    command -v "$command_name" >/dev/null 2>&1 || \
+    command -v "$command_name" >/dev/null 2>&1 ||
       die "Bootstrap package installation did not provide: $command_name"
   done
 }
@@ -282,7 +281,7 @@ bootstrap_yay() {
 install_desktop_packages() {
   local -a missing=()
   mapfile -t missing < <(pacman -T "${desktop_packages[@]}" 2>/dev/null || true)
-  (( ${#missing[@]} > 0 )) || {
+  ((${#missing[@]} > 0)) || {
     log "Supplemental desktop packages are already installed."
     return
   }
@@ -297,32 +296,6 @@ install_metapackages() {
   "$ARCH_INSTALLER" --helper "$aur_helper" --noconfirm
 }
 
-install_python_packages() {
-  mkdir -p -- "$(dirname -- "$SEAM_VIRTUAL_ENV")"
-  export UV_NO_MODIFY_PATH=1
-  export SEAM_VIRTUAL_ENV
-
-  gum spin \
-    --spinner dot \
-    --show-output \
-    --title "Creating Seam's Python 3.12 environment..." \
-    -- uv venv \
-      --allow-existing \
-      --prompt Seam \
-      --python 3.12 \
-      "$SEAM_VIRTUAL_ENV"
-
-  gum spin \
-    --spinner dot \
-    --show-output \
-    --title "Installing Seam's Python packages..." \
-    -- uv pip install \
-      --python "$SEAM_VIRTUAL_ENV/bin/python" \
-      --requirements "$PYTHON_REQUIREMENTS"
-
-  log "Python environment ready at $SEAM_VIRTUAL_ENV"
-}
-
 install_wallpapers() {
   local current_origin=""
   local first_entry=""
@@ -331,7 +304,7 @@ install_wallpapers() {
   if [[ -d "$WALLPAPER_DIR" ]]; then
     first_entry="$(find "$WALLPAPER_DIR" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null || true)"
   fi
-  if [[ ! -e "$WALLPAPER_DIR" || ( -d "$WALLPAPER_DIR" && -z "$first_entry" ) ]]; then
+  if [[ ! -e "$WALLPAPER_DIR" || (-d "$WALLPAPER_DIR" && -z "$first_entry") ]]; then
     gum spin \
       --spinner dot \
       --title "Downloading wallpapers..." \
@@ -344,8 +317,8 @@ install_wallpapers() {
     current_origin="$(git -C "$WALLPAPER_DIR" remote get-url origin 2>/dev/null || true)"
   fi
   if [[ "$current_origin" == "https://github.com/orangci/walls" ||
-        "$current_origin" == "https://github.com/orangci/walls.git" ||
-        "$current_origin" == "git@github.com:orangci/walls.git" ]]; then
+    "$current_origin" == "https://github.com/orangci/walls.git" ||
+    "$current_origin" == "git@github.com:orangci/walls.git" ]]; then
     if [[ -n "$(git -C "$WALLPAPER_DIR" status --porcelain --untracked-files=no)" ]]; then
       warn "Wallpaper repository has local changes; leaving it untouched."
       journal "SKIP wallpapers reason=dirty_repository"
@@ -366,7 +339,7 @@ collect_dotfile_targets() {
   local source_root entry
   shopt -s nullglob dotglob
   for source_root in "$DOTS_DIR"/*; do
-    if [[ -d "$source_root" && ( "${source_root##*/}" == ".config" || "${source_root##*/}" == ".local" ) ]]; then
+    if [[ -d "$source_root" && ("${source_root##*/}" == ".config" || "${source_root##*/}" == ".local") ]]; then
       for entry in "$source_root"/*; do
         printf '%s\0' "${entry#"$DOTS_DIR"/}"
       done
@@ -391,16 +364,16 @@ backup_existing_dotfiles() {
     backup_sources+=("$HOME/./$relative_path")
   done
 
-  (( ${#backup_sources[@]} > 0 )) || return 0
+  ((${#backup_sources[@]} > 0)) || return 0
   gum spin \
     --spinner dot \
     --show-output \
     --title "Backing up existing dotfiles..." \
     -- rsync -aR -- "${backup_sources[@]}" "$backup_dir/"
 
-  printf '%s\n' "$@" > "$backup_dir/.seam-backup-manifest"
+  printf '%s\n' "$@" >"$backup_dir/.seam-backup-manifest"
   printf 'Restore this backup with:\n  rsync -a -- %q/ %q/\n' "$backup_dir" "$HOME" \
-    > "$backup_dir/RESTORE.txt"
+    >"$backup_dir/RESTORE.txt"
 }
 
 deploy_dotfiles() {
@@ -425,7 +398,7 @@ deploy_dotfiles() {
     "Source: $DOTS_DIR" \
     "Destination: $HOME"
 
-  if (( ${#existing_targets[@]} > 0 )); then
+  if ((${#existing_targets[@]} > 0)); then
     gum style --foreground 214 "Found ${#existing_targets[@]} existing config targets."
     if gum confirm --default=yes "Back up your existing config files before continuing?"; then
       backup_dir="$HOME/.local/state/seam/backups/$(date +%Y%m%d-%H%M%S)"
@@ -454,11 +427,11 @@ verify_installation() {
     command -v "$command_name" >/dev/null 2>&1 || missing_commands+=("$command_name")
   done
 
-  (( ${#missing_commands[@]} == 0 )) || \
+  ((${#missing_commands[@]} == 0)) ||
     die "Post-install verification failed; missing commands: ${missing_commands[*]}"
-  [[ -r "$HOME/.config/quickshell/seam/shell.qml" ]] || \
+  [[ -r "$HOME/.config/quickshell/seam/shell.qml" ]] ||
     die "Post-install verification failed; Seam's shell.qml was not deployed."
-  [[ -x "$SEAM_VIRTUAL_ENV/bin/python" ]] || \
+  [[ -x "$SEAM_VIRTUAL_ENV/bin/python" ]] ||
     die "Post-install verification failed; Python environment is incomplete."
 
   uv pip check --python "$SEAM_VIRTUAL_ENV/bin/python"
@@ -478,7 +451,6 @@ fi
 log "Using AUR helper: $aur_helper"
 run_stage "Desktop packages" install_desktop_packages
 run_stage "Seam metapackages" install_metapackages
-run_stage "Python environment" install_python_packages
 run_stage "Wallpapers" install_wallpapers
 run_stage "Dotfiles" deploy_dotfiles
 run_stage "Verification" verify_installation
@@ -494,6 +466,5 @@ gum style \
   --bold \
   "Seam installation completed successfully" \
   "Elapsed: $((elapsed_seconds / 60))m $((elapsed_seconds % 60))s" \
-  "Python environment: $SEAM_VIRTUAL_ENV" \
   "Install journal: $install_journal" \
   "Backup: ${last_backup_dir:-not requested}"

@@ -86,7 +86,7 @@ Item {
       visible: root.leftTopCorner
       anchors { top: parent.top; right: parent.left; rightMargin: -1 }
       implicitSize: Appearance.radius(14)
-      color: Appearance.m3colors.m3surface
+      color: Appearance.colors.colLayer0
       corner: RoundCorner.CornerEnum.TopRight
     }
 
@@ -94,14 +94,14 @@ Item {
       visible: root.rightTopCorner
       anchors { top: parent.top; left: parent.right; leftMargin: -1 }
       implicitSize: Appearance.radius(14)
-      color: Appearance.m3colors.m3surface
+      color: Appearance.colors.colLayer0
       corner: RoundCorner.CornerEnum.TopLeft
     }
     RoundCorner {
       visible: root.rightBottomCorner
       anchors { top: parent.bottom; right: parent.right; topMargin: -1 }
       implicitSize: Appearance.radius(14)
-      color: Appearance.m3colors.m3surface
+      color: Appearance.colors.colLayer0
       corner: RoundCorner.CornerEnum.TopRight
     }
 
@@ -109,7 +109,7 @@ Item {
       visible: root.leftBottomCorner
       anchors { top: parent.bottom; left: parent.left; topMargin: -1 }
       implicitSize: Appearance.radius(14)
-      color: Appearance.m3colors.m3surface
+      color: Appearance.colors.colLayer0
       corner: RoundCorner.CornerEnum.TopLeft
     }
   }

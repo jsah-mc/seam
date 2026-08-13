@@ -255,21 +255,43 @@ Singleton {
     // - api_format: The API format of the model. Can be "openai" or "gemini". Default is "openai".
     // - extraParams: Extra parameters to be passed to the model. This is a JSON object.
     property var models: Config.options.policies.ai === 2 ? {} : {
-        "codex-cli": aiModelComponent.createObject(this, {
-            "name": "Codex (ChatGPT)",
+        "fast": aiModelComponent.createObject(this, {
+            "name": "Fast",
             "icon": "openai-symbolic",
-            "description": Translation.tr("Python Codex SDK service | Uses your existing Codex ChatGPT login. Run /login if authentication is needed."),
-            "homepage": "https://developers.openai.com/codex/",
-            "endpoint": "codex-cli",
-            "model": "",
+            "description": Translation.tr("Fast responses through the selected Seam provider."),
+            "endpoint": "seam-cli", "model": "fast",
             "requires_key": false,
-            "key_id": "codex-cli",
-            "api_format": "openai",
-            "backend": "codex-cli",
+            "api_format": "openai", "backend": "seam-cli",
+        }),
+        "balanced": aiModelComponent.createObject(this, {
+            "name": "Balanced", "icon": "openai-symbolic",
+            "description": Translation.tr("Balanced speed and capability through Seam."),
+            "endpoint": "seam-cli", "model": "balanced", "requires_key": false,
+            "api_format": "openai", "backend": "seam-cli",
+        }),
+        "smart": aiModelComponent.createObject(this, {
+            "name": "Smart", "icon": "openai-symbolic",
+            "description": Translation.tr("The strongest general-purpose Seam model."),
+            "endpoint": "seam-cli", "model": "smart", "requires_key": false,
+            "api_format": "openai", "backend": "seam-cli",
+        }),
+        "coding": aiModelComponent.createObject(this, {
+            "name": "Coding", "icon": "code-symbolic",
+            "description": Translation.tr("Seam's model preset optimized for code."),
+            "endpoint": "seam-cli", "model": "coding", "requires_key": false,
+            "api_format": "openai", "backend": "seam-cli",
         }),
     }
     property var modelList: Object.keys(root.models)
-    property var currentModelId: root.models[Persistent.states?.ai?.model] ? Persistent.states.ai.model : "codex-cli"
+    property string currentModelId: root.models[DockPins.aiModel] ? DockPins.aiModel : "balanced"
+
+    Connections {
+        target: DockPins
+        function onAiModelChanged() {
+            if (root.currentModelId !== DockPins.aiModel && root.models[DockPins.aiModel])
+                root.setModel(DockPins.aiModel, false, false)
+        }
+    }
 
     property var apiStrategies: {
         "openai": openaiApiStrategy.createObject(this),
@@ -421,7 +443,9 @@ Singleton {
                 );
                 return;
             }
+            root.currentModelId = modelId
             if (setPersistentState) Persistent.states.ai.model = modelId;
+            DockPins.setAiModel(modelId)
             if (feedback) root.addMessage(Translation.tr("Model set to %1").arg(model.name), root.interfaceRole);
             if (model.requires_key) {
                 // If key not there show advice
@@ -521,7 +545,7 @@ Singleton {
         function makeRequest() {
             const model = models[currentModelId];
 
-            if (model?.backend === "codex-cli") {
+            if (model?.backend === "seam-cli") {
                 codexRequester.makeRequest()
                 return
             }
@@ -647,12 +671,6 @@ Singleton {
         }
     }
 
-    FileView {
-        id: codexRequestFile
-        path: ""
-        blockLoading: true
-    }
-
     Process {
         id: codexRequester
         property AiMessageData message
@@ -696,40 +714,18 @@ Singleton {
             root.messageIDs = [...root.messageIDs, id]
             root.messageByID[id] = message
 
-            const selectedModel = root.models[root.currentModelId]?.model ?? ""
-            let imagePath = ""
-            if (root.pendingFilePath.length > 0) {
-                imagePath = root.pendingFilePath
-                message.localFilePath = root.pendingFilePath
-                root.pendingFilePath = ""
-            }
-            codexRequestFile.path = "/tmp/seam-codex-request.json"
-            codexRequestFile.setText(JSON.stringify({
-                prompt: prompt,
-                model: selectedModel,
-                image: imagePath,
-            }))
-            command = [
-                Quickshell.env("HOME") + "/.local/share/quickshell/.venv/bin/python",
-                CF.FileUtils.trimFileProtocol(Quickshell.shellPath("scripts/ai/codex_chat.py")),
-                "--request", codexRequestFile.path
-            ]
+            DockPins.setAiModel(root.currentModelId)
+            command = ["seam", "ai", "msg", prompt]
             running = true
         }
 
         stdout: SplitParser {
             onRead: line => {
-                try {
-                    const result = JSON.parse(line)
-                    codexRequester.receivedResponse = true
-                    if (result.ok) {
-                        codexRequester.finish(result.content ?? "")
-                    } else {
-                        codexRequester.finish(`**Codex SDK error**\n\n${result.error ?? "Unknown error"}\n\nRun \`/login\` if Codex is not signed in.`)
-                    }
-                } catch (error) {
-                    codexRequester.errorOutput += line + "\n"
-                }
+                codexRequester.receivedResponse = true
+                const content = codexRequester.message.rawContent + line + "\n"
+                codexRequester.message.rawContent = content
+                codexRequester.message.content = content
+                codexRequester.message.thinking = false
             }
         }
 
@@ -738,9 +734,11 @@ Singleton {
         }
 
         onExited: (exitCode, exitStatus) => {
-            if (!codexRequester.receivedResponse) {
+            if (codexRequester.receivedResponse) {
+                codexRequester.finish(codexRequester.message.rawContent.trim())
+            } else {
                 const detail = codexRequester.errorOutput.trim()
-                codexRequester.finish(`**Codex SDK error**\n\n${detail.length > 0 ? detail : `Bridge exited with code ${exitCode}`}\n\nRun \`/login\` if Codex is not signed in.`)
+                codexRequester.finish(`**Seam AI error**\n\n${detail.length > 0 ? detail : `seam exited with code ${exitCode}`}`)
             }
         }
     }

@@ -29,7 +29,12 @@ PanelWindow {
     Process {
         id: captureCommand
         running: false
-        onExited: notificationCommand.running = true
+        onExited: exitCode => {
+            notificationCommand.command = exitCode === 0
+                ? ["notify-send", "Screenshot saved", "Saved to ~/Pictures/Screenshots and copied to the clipboard"]
+                : ["notify-send", "Screenshot failed", "The selected area could not be captured"];
+            notificationCommand.running = true;
+        }
     }
     Timer {
         id: captureDelay
@@ -50,13 +55,49 @@ PanelWindow {
         if (width <= 4 || height <= 4 || captureCommand.running)
             return;
 
+        root.captureGeometry(root.left, root.top, width, height);
+    }
+
+    function captureGeometry(localX, localY, width, height) {
+        if (width <= 0 || height <= 0 || captureCommand.running || root.capturing)
+            return;
         const screenX = root.screen?.x ?? 0;
         const screenY = root.screen?.y ?? 0;
-        const x = Math.ceil(screenX + root.left);
-        const y = Math.ceil(screenY + root.top);
-        const geometry = `${x},${y} ${width}x${height}`;
-        captureCommand.command = ["sh", "-c",
-            `mkdir -p "$HOME/Pictures/Screenshots"; screenshot_path="$HOME/Pictures/Screenshots/Screenshot_$(date +%Y-%m-%d_%H-%M-%S).png"; grim -g "${geometry}" "$screenshot_path" && wl-copy < "$screenshot_path"`];
+        const x = Math.ceil(screenX + localX);
+        const y = Math.ceil(screenY + localY);
+        const geometry = `${x},${y} ${Math.floor(width)}x${Math.floor(height)}`;
+        captureCommand.command = ["bash", "-c",
+            'mkdir -p -- "$HOME/Pictures/Screenshots"; screenshot_path="$HOME/Pictures/Screenshots/Screenshot_$(date +%Y-%m-%d_%H-%M-%S).png"; grim -g "$1" "$screenshot_path" && wl-copy < "$screenshot_path"',
+            "seam-screenshot", geometry];
+        root.capturing = true;
+        captureDelay.start();
+    }
+
+    function captureFullscreen() {
+        root.captureGeometry(0, 0, root.width, root.height);
+    }
+
+    function captureWindowAt(localX, localY) {
+        if (captureCommand.running || root.capturing)
+            return;
+        const x = Math.floor((root.screen?.x ?? 0) + localX);
+        const y = Math.floor((root.screen?.y ?? 0) + localY);
+        captureCommand.command = ["bash", "-c", String.raw`
+            set -euo pipefail
+            geometry="$(hyprctl clients -j | jq -r --argjson x "$1" --argjson y "$2" '
+                [.[] | select(.mapped != false)
+                  | select(.at[0] <= $x and .at[1] <= $y)
+                  | select((.at[0] + .size[0]) > $x and (.at[1] + .size[1]) > $y)]
+                | sort_by(if .floating then 1 else 0 end)
+                | last
+                | if . == null then empty else "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])" end
+            ')"
+            test -n "$geometry"
+            mkdir -p -- "$HOME/Pictures/Screenshots"
+            screenshot_path="$HOME/Pictures/Screenshots/Screenshot_$(date +%Y-%m-%d_%H-%M-%S).png"
+            grim -g "$geometry" "$screenshot_path"
+            wl-copy < "$screenshot_path"
+        `, "seam-window-screenshot", `${x}`, `${y}`];
         root.capturing = true;
         captureDelay.start();
     }
@@ -64,7 +105,17 @@ PanelWindow {
     contentItem {
         focus: true
         Keys.onEscapePressed: root.controller.isOpen = false
-        Keys.onReturnPressed: root.captureSelection()
+        Keys.onReturnPressed: {
+            if (root.controller.mode === "region") root.captureSelection();
+            else if (root.controller.mode === "fullscreen") root.captureFullscreen();
+        }
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_R) root.controller.mode = "region";
+            else if (event.key === Qt.Key_W) root.controller.mode = "window";
+            else if (event.key === Qt.Key_F) root.controller.mode = "fullscreen";
+            else return;
+            event.accepted = true;
+        }
     }
 
     property real left: 0
@@ -99,9 +150,9 @@ PanelWindow {
         onPaint: {
             const context = getContext("2d");
             context.reset();
-            context.fillStyle = "#99000000";
+            context.fillStyle = root.controller.mode === "region" ? "#99000000" : "#44000000";
             context.fillRect(0, 0, root.width, root.height);
-            if (!root.hasSelection)
+            if (root.controller.mode !== "region" || !root.hasSelection)
                 return;
 
             const selectionWidth = root.right - root.left;
@@ -125,7 +176,7 @@ PanelWindow {
         start: Qt.vector2d(0, 0)
         end: Qt.vector2d(root.left, root.top)
         color: Appearance.m3colors.m3primary
-        visible: !root.capturing
+        visible: !root.capturing && root.controller.mode === "region"
     }
     Rope {
         id: topRightRope
@@ -133,7 +184,7 @@ PanelWindow {
         start: Qt.vector2d(root.width, 0)
         end: Qt.vector2d(root.right, root.top)
         color: Appearance.m3colors.m3primary
-        visible: !root.capturing
+        visible: !root.capturing && root.controller.mode === "region"
     }
     Rope {
         id: bottomRightRope
@@ -141,7 +192,7 @@ PanelWindow {
         start: Qt.vector2d(root.width, root.height)
         end: Qt.vector2d(root.right, root.bottom)
         color: Appearance.m3colors.m3primary
-        visible: !root.capturing
+        visible: !root.capturing && root.controller.mode === "region"
     }
     Rope {
         id: bottomLeftRope
@@ -149,14 +200,14 @@ PanelWindow {
         start: Qt.vector2d(0, root.height)
         end: Qt.vector2d(root.left, root.bottom)
         color: Appearance.m3colors.m3primary
-        visible: !root.capturing
+        visible: !root.capturing && root.controller.mode === "region"
     }
 
     component SelectionHandle: Rectangle {
         width: 22
         height: 22
         radius: 11
-        visible: root.hasSelection && !root.capturing
+        visible: root.controller.mode === "region" && root.hasSelection && !root.capturing
         color: Appearance.m3colors.m3primary
         border.width: 4
         border.color: Appearance.m3colors.m3onPrimary
@@ -168,31 +219,88 @@ PanelWindow {
     SelectionHandle { x: root.left - width / 2; y: root.bottom - height / 2 }
 
     Rectangle {
+        id: modePill
+        z: 20
         visible: !root.capturing
         anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 28 }
-        width: instructionRow.implicitWidth + 32
-        height: 44
-        radius: 22
+        width: modeRow.implicitWidth + 16
+        height: 52
+        radius: Appearance.radius(26)
         color: Appearance.m3colors.m3surfaceContainerHigh
         border.width: 1
         border.color: Appearance.m3colors.m3outlineVariant
 
         Row {
-            id: instructionRow
+            id: modeRow
             anchors.centerIn: parent
-            spacing: 9
-            Text {
-                text: "screenshot_region"
-                color: Appearance.m3colors.m3primary
-                font.family: Appearance.font.family.iconMaterial
-                font.pixelSize: 20
+            spacing: 4
+
+            Repeater {
+                model: [
+                    { mode: "region", icon: "screenshot_region", label: "Region" },
+                    { mode: "window", icon: "select_window", label: "Window" },
+                    { mode: "fullscreen", icon: "screenshot_monitor", label: "Full screen" }
+                ]
+
+                delegate: Rectangle {
+                    id: modeButton
+                    required property var modelData
+                    readonly property bool selected: root.controller.mode === modelData.mode
+                    width: buttonContent.implicitWidth + 20
+                    height: 38
+                    radius: Appearance.radius(19)
+                    color: selected ? Appearance.m3colors.m3primaryContainer
+                        : modeHover.hovered ? Appearance.m3colors.m3surfaceContainerHighest : "transparent"
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                    Row {
+                        id: buttonContent
+                        anchors.centerIn: parent
+                        spacing: 7
+                        Text {
+                            text: modeButton.modelData.icon
+                            color: modeButton.selected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurfaceVariant
+                            font.family: Appearance.font.family.iconMaterial
+                            font.pixelSize: 18
+                        }
+                        Text {
+                            text: modeButton.modelData.label
+                            color: modeButton.selected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            font.family: Appearance.font.family.main
+                            font.pixelSize: 13
+                        }
+                    }
+                    HoverHandler { id: modeHover }
+                    TapHandler {
+                        onTapped: {
+                            root.controller.mode = modeButton.modelData.mode;
+                            if (modeButton.modelData.mode === "fullscreen")
+                                Qt.callLater(() => root.captureFullscreen());
+                        }
+                    }
+                }
             }
-            Text {
-                text: "Drag and release to save  •  Esc to cancel"
-                color: Appearance.m3colors.m3onSurface
-                font.family: Appearance.font.family.main
-                font.pixelSize: 13
-            }
+        }
+    }
+
+    Rectangle {
+        z: 19
+        visible: !root.capturing
+        anchors { horizontalCenter: parent.horizontalCenter; bottom: modePill.top; bottomMargin: 10 }
+        width: instructionText.implicitWidth + 24
+        height: 32
+        radius: Appearance.radius(16)
+        color: Appearance.m3colors.m3surfaceContainer
+        Text {
+            id: instructionText
+            anchors.centerIn: parent
+            text: root.controller.mode === "region" ? "Drag and release to capture  •  R"
+                : root.controller.mode === "window" ? "Click a window to capture  •  W"
+                : "Capturing this screen  •  F"
+            color: Appearance.m3colors.m3onSurfaceVariant
+            font.family: Appearance.font.family.main
+            font.pixelSize: 12
         }
     }
 
@@ -200,6 +308,10 @@ PanelWindow {
         anchors.fill: parent
         enabled: !root.capturing
         onPressed: event => {
+            if (root.controller.mode === "window")
+                return;
+            if (root.controller.mode !== "region")
+                return;
             root.dragOriginX = event.x;
             root.dragOriginY = event.y;
             root.left = root.dragOriginX;
@@ -208,14 +320,19 @@ PanelWindow {
             root.bottom = root.dragOriginY;
         }
         onPositionChanged: event => {
-            if (!pressed)
+            if (!pressed || root.controller.mode !== "region")
                 return;
             root.left = Math.min(root.dragOriginX, event.x);
             root.top = Math.min(root.dragOriginY, event.y);
             root.right = Math.max(root.dragOriginX, event.x);
             root.bottom = Math.max(root.dragOriginY, event.y);
         }
-        onReleased: root.captureSelection()
+        onReleased: event => {
+            if (root.controller.mode === "region")
+                root.captureSelection();
+            else if (root.controller.mode === "window")
+                root.captureWindowAt(event.x, event.y);
+        }
     }
 
     onLeftChanged: {
@@ -229,6 +346,10 @@ PanelWindow {
     }
     onBottomChanged: {
         canvas.requestPaint();
+    }
+    Connections {
+        target: root.controller
+        function onModeChanged() { canvas.requestPaint(); }
     }
     onWidthChanged: {
         left = width / 2;
