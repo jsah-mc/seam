@@ -39,6 +39,7 @@ readonly -a desktop_packages=(
   xdg-user-dirs
   zen-browser-bin
   vesktop
+  yq
 )
 
 usage() {

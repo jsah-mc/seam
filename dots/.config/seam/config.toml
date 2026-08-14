@@ -1,0 +1,82 @@
+# Seam configuration
+# This file is watched and updated live.
+
+[theme]
+mode = "dark"
+scheme = "auto"
+
+[ai]
+provider = "chatgpt"
+model = "balanced"
+
+[dock]
+enabled = false
+autoHide = true
+side = "bottom"
+
+[dock.pins]
+"zen" = 0
+"dolphin" = 1
+"kitty" = 2
+"code" = 3
+"vesktop" = 4
+"chromium" = 5
+
+[bar.widgets."battery"]
+area = "right"
+index = 2
+
+[bar.widgets."clock"]
+area = "center"
+index = 1
+
+[bar.widgets."connectivity"]
+area = "right"
+index = 4
+
+[bar.widgets."currentWindow"]
+area = "center"
+index = 0
+
+[bar.widgets."launcher"]
+area = "left"
+index = 0
+
+[bar.widgets."lock"]
+area = "right"
+index = 0
+
+[bar.widgets."power"]
+area = "right"
+index = 6
+
+[bar.widgets."settings"]
+area = "right"
+index = 1
+
+[bar.widgets."systemTray"]
+area = "right"
+index = 3
+
+[bar.widgets."visualizer"]
+area = "center"
+index = 2
+
+[bar.widgets."wallpaper"]
+area = "right"
+index = 5
+
+[bar.widgets."workspaces"]
+area = "left"
+index = 1
+
+# [templates.example]
+# input = "~/example.txt"
+# output = "~/Example"
+
+[mcp.browser]
+command = "npx"
+args = [
+  "-y",
+  "@browsermcp/mcp@latest"
+]

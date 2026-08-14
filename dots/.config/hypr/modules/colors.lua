@@ -1,5 +1,5 @@
 return {
-  focused = "#b3d088",
-  focused2 = "#c0cbac",
-  unfocused = "#12140e",
+  focused = "#ffb59e",
+  focused2 = "#e7bdb1",
+  unfocused = "#1a110f",
 }
