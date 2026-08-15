@@ -162,6 +162,7 @@ ColumnLayout {
             color: root.messageData?.thinking ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer1
             textFormat: renderMarkdown ? TextEdit.MarkdownText : TextEdit.PlainText
             text: modelData
+            background: null
 
             onTextChanged: {
                 if (!root.editing) return

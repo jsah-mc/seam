@@ -9,11 +9,6 @@ import qs.modules.common
 Scope {
   id: root
 
-  FontLoader {
-    id: materialIcons
-    source: "file:///usr/share/fonts/ttf-material-symbols-variable/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf"
-  }
-
   property bool opened: false
   property real revealProgress: 0
   property string wallpaperDirectory: Quickshell.env("HOME") + "/Pictures/Wallpapers"
@@ -326,7 +321,7 @@ Scope {
               Row {
                 anchors.centerIn: parent
                 spacing: 6
-                Text { text: "folder_open"; color: Appearance.m3colors.m3onSurface; font.family: materialIcons.name; font.pixelSize: 16 }
+                Text { text: "folder_open"; color: Appearance.m3colors.m3onSurface; font.family: Appearance.font.family.iconMaterial; font.pixelSize: 16 }
                 Text { text: "Choose folder"; color: Appearance.m3colors.m3onSurface; font.pixelSize: 11; font.bold: true }
               }
               HoverHandler { id: folderHover }
@@ -350,7 +345,7 @@ Scope {
               Row {
                 anchors.centerIn: parent
                 spacing: 6
-                Text { text: root.themeMode === "dark" ? "dark_mode" : "light_mode"; color: Appearance.m3colors.m3onSurface; font.family: materialIcons.name; font.pixelSize: 16 }
+                Text { text: root.themeMode === "dark" ? "dark_mode" : "light_mode"; color: Appearance.m3colors.m3onSurface; font.family: Appearance.font.family.iconMaterial; font.pixelSize: 16 }
                 Text { text: root.themeMode === "dark" ? "Dark" : "Light"; color: Appearance.m3colors.m3onSurface; font.pixelSize: 11; font.bold: true }
               }
               HoverHandler { id: themeHover }
@@ -436,7 +431,7 @@ Scope {
                       anchors.horizontalCenter: parent.horizontalCenter
                       text: "movie"
                       color: Appearance.m3colors.m3primary
-                      font.family: materialIcons.name
+                      font.family: Appearance.font.family.iconMaterial
                       font.pixelSize: 38
                     }
 

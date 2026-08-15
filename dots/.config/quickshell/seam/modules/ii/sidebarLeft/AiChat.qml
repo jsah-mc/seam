@@ -518,6 +518,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     Layout.preferredHeight: Math.min(root.height * 3/5, messageInputField.height)
                     clip: true
                     ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                    background: null
 
                     StyledTextArea { // The actual TextArea (inside ScrollView to enable scrolling)
                         id: messageInputField

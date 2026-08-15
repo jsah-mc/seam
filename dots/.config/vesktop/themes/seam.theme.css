@@ -32,29 +32,29 @@ body {
   --colors: on;
 
   /* Text */
-  --text-0: #1a120e;
-  --text-1: #f0dfd8;
-  --text-2: #f0dfd8;
-  --text-3: color-mix(in srgb, #f0dfd8 70%, #a08d85);
-  --text-4: color-mix(in srgb, #f0dfd8 50%, #a08d85);
-  --text-5: color-mix(in srgb, #f0dfd8 35%, #a08d85);
+  --text-0: #1a110f;
+  --text-1: #f1dfda;
+  --text-2: #f1dfda;
+  --text-3: color-mix(in srgb, #f1dfda 70%, #a08d87);
+  --text-4: color-mix(in srgb, #f1dfda 50%, #a08d87);
+  --text-5: color-mix(in srgb, #f1dfda 35%, #a08d87);
 
   /* Backgrounds */
-  --bg-1: #1a120e;
-  --bg-2: #52443d;
-  --bg-3: #52443d;
-  --bg-4: #1a120e;
+  --bg-1: #1a110f;
+  --bg-2: #53433f;
+  --bg-3: #53433f;
+  --bg-4: #1a110f;
 
-  --hover: #52443d;
-  --active: #52443d;
-  --message-hover: #52443d;
+  --hover: #53433f;
+  --active: #53433f;
+  --message-hover: #53433f;
 
   /* Primary & Accents */
-  --accent-1: #ffb691;
+  --accent-1: #ffb59e;
   --accent-2: var(--accent-1);
-  --accent-3: #e6beac;
-  --accent-4: #52443d;
-  --accent-5: #cfc890;
+  --accent-3: #e7bdb1;
+  --accent-4: #53433f;
+  --accent-5: #d7c68d;
   --accent-6: var(--accent-1);
 
   /* Borders */
@@ -71,11 +71,11 @@ body {
   --pill-active: var(--accent-1);
 
   /* Status */
-  --online: #ffb691;
-  --idle: #cfc890;
+  --online: #ffb59e;
+  --idle: #d7c68d;
   --dnd: #ffb4ab;
-  --streaming: #e6beac;
-  --offline: #a08d85;
+  --streaming: #e7bdb1;
+  --offline: #a08d87;
 }
 
 /* ===================== /
@@ -301,14 +301,14 @@ body {
 
 /* 1. Read channels (Set to requested 90% opacity for clear visibility) */
 [class*="link_"] * {
-  color: color-mix(in srgb, #f0dfd8 80%, transparent) !important;
+  color: color-mix(in srgb, #f1dfda 80%, transparent) !important;
   opacity: 0.90 !important;
 }
 
 /* 2. Unread channels */
 [class*="modeUnread_"] [class*="link_"] *,
 [class*="modeUnreadImportant_"] [class*="link_"] * {
-  color: #f0dfd8 !important;
+  color: #f1dfda !important;
   opacity: 1 !important;
 }
 [class*="modeUnread_"] [class*="name_"],
@@ -318,22 +318,22 @@ body {
 
 /* 3. Selected channel */
 [class*="modeSelected_"] [class*="link_"] * {
-  color: #f0dfd8 !important;
+  color: #f1dfda !important;
   opacity: 1 !important;
 }
 
 /* 4. Muted channels */
 [class*="modeMuted_"] [class*="link_"] * {
-  color: color-mix(in srgb, #f0dfd8 45%, transparent) !important;
+  color: color-mix(in srgb, #f1dfda 45%, transparent) !important;
   opacity: 0.55 !important;
 }
 
 /* 5. Direct messages (Set to requested 90% opacity for clear visibility) */
 [class*="privateChannels_"] [class*="channel_"] * {
-  color: color-mix(in srgb, #f0dfd8 80%, transparent) !important;
+  color: color-mix(in srgb, #f1dfda 80%, transparent) !important;
   opacity: 0.90 !important;
 }
 [class*="privateChannels_"] [class*="selected_"] * {
-  color: #f0dfd8 !important;
+  color: #f1dfda !important;
   opacity: 1 !important;
 }

@@ -222,6 +222,7 @@ ColumnLayout {
                         color: messageData.thinking ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer1
 
                         text: segmentContent
+                        background: null
                         onTextChanged: {
                             segmentContent = text
                         }

@@ -7,11 +7,6 @@ import qs.modules.common
 Rectangle {
   id: root
 
-  FontLoader {
-    id: materialIcons
-    source: "file:///usr/share/fonts/ttf-material-symbols-variable/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf"
-  }
-
   property bool wifiEnabled: false
   property bool wifiConnected: false
   property bool ethernetConnected: false
@@ -62,7 +57,7 @@ Rectangle {
       text: root.networkIcon()
       color: root.ethernetConnected || root.wifiConnected
         ? Appearance.m3colors.m3primary : Appearance.m3colors.m3onSurfaceVariant
-      font.family: materialIcons.name
+      font.family: Appearance.font.family.iconMaterial
       font.pixelSize: 13
 
     }
@@ -70,7 +65,7 @@ Rectangle {
     Text {
       text: root.bluetoothEnabled ? "bluetooth" : "bluetooth_disabled"
       color: root.bluetoothEnabled ? Appearance.m3colors.m3primary : Appearance.m3colors.m3onSurfaceVariant
-      font.family: materialIcons.name
+      font.family: Appearance.font.family.iconMaterial
       font.pixelSize: 13
 
     }

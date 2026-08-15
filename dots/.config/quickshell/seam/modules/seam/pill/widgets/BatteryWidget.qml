@@ -5,11 +5,6 @@ import qs.modules.common
 Item {
   id: root
 
-  FontLoader {
-    id: materialIcons
-    source: "file:///usr/share/fonts/ttf-material-symbols-variable/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf"
-  }
-
   property bool available: false
   property bool charging: false
   property int percentage: 0
@@ -50,7 +45,7 @@ Item {
     Text {
       text: root.batteryIcon()
       color: root.percentage <= 15 ? Appearance.m3colors.m3error : Appearance.m3colors.m3onSurface
-      font.family: materialIcons.name
+      font.family: Appearance.font.family.iconMaterial
       font.pixelSize: 13
       font.hintingPreference: Font.PreferNoHinting
     }

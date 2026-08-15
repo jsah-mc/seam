@@ -1,0 +1,23 @@
+# VS Code runtime/session data. Keep only explicit safe files under
+# dots/.config/Code/User, such as settings.json, keybindings.json, and snippets.
+/dots/.config/Code/*
+!/dots/.config/Code/User/
+/dots/.config/Code/User/*
+!/dots/.config/Code/User/settings.json
+!/dots/.config/Code/User/keybindings.json
+!/dots/.config/Code/User/snippets/
+!/dots/.config/Code/User/snippets/**
+
+# Vesktop runtime/session data. Keep only settings and themes.
+/dots/.config/vesktop/*
+!/dots/.config/vesktop/settings.json
+!/dots/.config/vesktop/settings/
+!/dots/.config/vesktop/settings/**
+!/dots/.config/vesktop/themes/
+!/dots/.config/vesktop/themes/**
+
+# Zed runtime data. Keep only settings and themes.
+/dots/.config/zed/*
+!/dots/.config/zed/settings.json
+!/dots/.config/zed/themes/
+!/dots/.config/zed/themes/**
