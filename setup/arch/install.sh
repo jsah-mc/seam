@@ -31,6 +31,8 @@ readonly -a desktop_packages=(
   go-yq
   hypridle
   jq
+  qt5ct
+  qt6ct
   ripgrep
   rsync
   tela-circle-icon-theme-standard

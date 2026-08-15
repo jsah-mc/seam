@@ -16,6 +16,8 @@ depends=(
   kitty
   matugen
   otf-space-grotesk
+  qt5ct
+  qt6ct
   starship
   ttf-jetbrains-mono-nerd
   ttf-material-symbols-variable-git

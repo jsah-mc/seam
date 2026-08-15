@@ -1,5 +1,43 @@
 { config, lib, pkgs, ... }:
 
+let
+  qtctSettings = {
+    Appearance = {
+      color_scheme_path = "~/.local/share/color-schemes/Seam.colors";
+      custom_palette = true;
+      icon_theme = "Tela-circle";
+      standard_dialogs = "default";
+      style = "Breeze";
+    };
+
+    Fonts = {
+      fixed = ''"JetBrainsMono Nerd Font,9,-1,2,400,0,0,0,0,0,0,0,0,0,0,1,,0,0"'';
+      general = ''"Noto Sans,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0"'';
+    };
+
+    Interface = {
+      activate_item_on_single_click = 1;
+      buttonbox_layout = 0;
+      cursor_flash_time = 1000;
+      dialog_buttons_have_icons = 1;
+      double_click_interval = 400;
+      gui_effects = "@Invalid()";
+      keyboard_scheme = 2;
+      menus_have_icons = true;
+      show_shortcuts_in_context_menus = true;
+      stylesheets = "@Invalid()";
+      toolbutton_style = 4;
+      underline_shortcut = 1;
+      wheel_scroll_lines = 3;
+    };
+
+    Troubleshooting = {
+      force_raster_widgets = 1;
+      ignored_applications = "@Invalid()";
+    };
+  };
+in
+
 {
   fonts.fontconfig.enable = true;
 
@@ -46,15 +84,21 @@
 
   home = {
     packages = with pkgs; [
-      darkly
       nerd-fonts.jetbrains-mono
       # Nix equivalent of Arch's ttf-material-symbols-variable-git.
       material-symbols
-      qt6Packages.qt6ct
       tela-circle-icon-theme
     ];
+  };
 
-    sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
+  qt = {
+    enable = true;
+
+    platformTheme.name = "qtct";
+    style.name = "breeze";
+
+    qt5ctSettings = qtctSettings;
+    qt6ctSettings = qtctSettings;
   };
 
   # These files predate Home Manager and contain the settings now declared
@@ -62,36 +106,6 @@
   home.file.${config.gtk.gtk2.configLocation}.force = lib.mkForce true;
   xdg.configFile."gtk-3.0/settings.ini".force = lib.mkForce true;
   xdg.configFile."gtk-4.0/settings.ini".force = lib.mkForce true;
-
-  xdg.configFile."qt6ct/qt6ct.conf".text = ''
-    [Appearance]
-    color_scheme_path=~/.local/share/color-schemes/Seam.colors
-    custom_palette=true
-    icon_theme=Tela-circle
-    standard_dialogs=default
-    style=Darkly
-
-    [Fonts]
-    fixed="monospace,9,-1,2,400,0,0,0,0,0,0,0,0,0,0,1,,0,0"
-    general="Noto Sans,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0"
-
-    [Interface]
-    activate_item_on_single_click=1
-    buttonbox_layout=0
-    cursor_flash_time=1000
-    dialog_buttons_have_icons=1
-    double_click_interval=400
-    gui_effects=@Invalid()
-    keyboard_scheme=2
-    menus_have_icons=true
-    show_shortcuts_in_context_menus=true
-    stylesheets=@Invalid()
-    toolbutton_style=4
-    underline_shortcut=1
-    wheel_scroll_lines=3
-
-    [Troubleshooting]
-    force_raster_widgets=1
-    ignored_applications=@Invalid()
-  '';
+  xdg.configFile."qt5ct/qt5ct.conf".force = lib.mkForce true;
+  xdg.configFile."qt6ct/qt6ct.conf".force = lib.mkForce true;
 }
